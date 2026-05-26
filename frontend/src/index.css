@@ -1,0 +1,28 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-slate-900 text-slate-100 min-h-screen font-sans antialiased;
+}
+
+/* Glassmorphism utilities */
+.glass-panel {
+  @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-xl;
+}
+
+.glass-input {
+  @apply bg-white/5 border border-white/10 focus:border-indigo-400 focus:ring-1 focus:ring-indigo-400 focus:outline-none rounded-lg px-4 py-2 transition-colors;
+}
+
+.btn-primary {
+  @apply bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 text-white font-medium py-2 px-4 rounded-lg shadow-lg hover:shadow-indigo-500/25 transition-all active:scale-95;
+}
+
+.btn-secondary {
+  @apply bg-white/10 hover:bg-white/20 text-white font-medium py-2 px-4 rounded-lg transition-all active:scale-95;
+}
+
+.btn-danger {
+  @apply bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-medium py-2 px-4 rounded-lg shadow-lg hover:shadow-red-500/25 transition-all active:scale-95;
+}
