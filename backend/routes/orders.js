@@ -2,17 +2,20 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 const redisClient = require('../redisClient');
+const { authMiddleware } = require('../middlewares/auth.middleware');
 
-// Helper to check if 30 minutes have passed
 const isPast30Minutes = (createdAt) => {
   const thirtyMins = 30 * 60 * 1000;
   return (Date.now() - new Date(createdAt).getTime()) > thirtyMins;
 };
 
+router.use(authMiddleware);
+
 // Create a new order (Checkout)
 router.post('/', async (req, res) => {
   try {
-    const { userId, items, totalAmount, shippingDetails, paymentMethod } = req.body;
+    const { items, totalAmount, shippingDetails, paymentMethod } = req.body;
+    const userId = req.user.id;
     
     if (paymentMethod !== 'COD') {
       return res.status(400).json({ error: 'Only COD payment method is supported.' });
@@ -38,11 +41,25 @@ router.post('/', async (req, res) => {
   }
 });
 
-// Get user orders (History)
-router.get('/:userId', async (req, res) => {
+// Get user orders (History) with pagination
+router.get('/', async (req, res) => {
   try {
-    const orders = await Order.find({ userId: req.params.userId }).sort({ createdAt: -1 });
-    res.json(orders);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const skip = (page - 1) * limit;
+
+    const total = await Order.countDocuments({ userId: req.user.id });
+    const orders = await Order.find({ userId: req.user.id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+      
+    res.json({
+      data: orders,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit)
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

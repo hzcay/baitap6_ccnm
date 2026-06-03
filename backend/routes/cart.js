@@ -1,14 +1,16 @@
 const express = require('express');
 const router = express.Router();
 const redisClient = require('../redisClient');
+const { authMiddleware } = require('../middlewares/auth.middleware');
 
-// Helper to get cart key for a user (using session or user id, let's assume simple user param for assignment)
 const getCartKey = (userId) => `cart:${userId}`;
 
+router.use(authMiddleware);
+
 // Get Cart
-router.get('/:userId', async (req, res) => {
+router.get('/', async (req, res) => {
   try {
-    const cart = await redisClient.get(getCartKey(req.params.userId));
+    const cart = await redisClient.get(getCartKey(req.user.id));
     res.json(cart ? JSON.parse(cart) : { items: [], total: 0 });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -16,11 +18,10 @@ router.get('/:userId', async (req, res) => {
 });
 
 // Update/Add to Cart
-router.post('/:userId', async (req, res) => {
+router.post('/', async (req, res) => {
   try {
     const { items, total } = req.body;
-    // Store cart with 24 hours TTL
-    await redisClient.set(getCartKey(req.params.userId), JSON.stringify({ items, total }), 'EX', 86400);
+    await redisClient.set(getCartKey(req.user.id), JSON.stringify({ items, total }), 'EX', 86400);
     res.json({ message: 'Cart updated successfully', items, total });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -28,9 +29,9 @@ router.post('/:userId', async (req, res) => {
 });
 
 // Clear Cart
-router.delete('/:userId', async (req, res) => {
+router.delete('/', async (req, res) => {
   try {
-    await redisClient.del(getCartKey(req.params.userId));
+    await redisClient.del(getCartKey(req.user.id));
     res.json({ message: 'Cart cleared successfully' });
   } catch (err) {
     res.status(500).json({ error: err.message });
